@@ -2,6 +2,8 @@
 library('ggplot2')
 library('PerformanceAnalytics')
 library('zoo')
+library('xts')
+library('tseries')
 
 # Chargement des données
 df_airliquide=read.csv('airliquide_jour_2010_2015.csv')
@@ -17,7 +19,7 @@ df_creditagricole=read.csv('creditagricole_jour_2010_2015.csv')
 
 
 # Nombre total d'actifs
-nb_actifs= 1252300
+nb_actifs= 100
 
 # le portefeuille des actifs; 10 actifs différents.
 # Axa,bnp,sg,credit agricole,orange,total,lmvh,csg,vinci,air liquide
@@ -28,31 +30,101 @@ portefeuille_nb_actifs = portefeuille_parts*nb_actifs
 
 # Valeurs historiques des actions dans le pportefeuille
 #Après avoir chargé les données on ne retient que deux colonnes, la date et la colonne valeur qui est la moyenne des High et Low
-df_vairliquide=data.frame(Date=df_airliquide$Date,Valeur=(df_airliquide$High+df_airliquide$Low)/2*portefeuille_nb_actifs[10])
-df_vaxa=data.frame(Date=df_axa$Date,Valeur=(df_axa$High+df_axa$Low)/2*portefeuille_nb_actifs[1])
-df_vbnp=data.frame(Date=df_bnp$Date,Valeur=(df_bnp$High+df_bnp$Low)/2*portefeuille_nb_actifs[2])
-df_vcompagniesaintgobin=data.frame(Date=df_compagniesaintgobin$Date,Valeur=(df_compagniesaintgobin$High+df_compagniesaintgobin$Low)/2*portefeuille_nb_actifs[8])
-df_vlmvh=data.frame(Date=df_lmvh$Date,Valeur=(df_lmvh$High+df_lmvh$Low)/2*portefeuille_nb_actifs[7])
-df_vorange=data.frame(Date=df_orange$Date,Valeur=(df_orange$High+df_orange$Low)/2*portefeuille_nb_actifs[5])
-df_vsg=data.frame(Date=df_sg$Date,Valeur=(df_sg$High+df_sg$Low)/2*portefeuille_nb_actifs[3])
-df_vtotal=data.frame(Date=df_total$Date,Valeur=(df_total$High+df_total$Low)/2*portefeuille_nb_actifs[6])
-df_vvinci=data.frame(Date=df_vinci$Date,Valeur=(df_vinci$High+df_vinci$Low)/2*portefeuille_nb_actifs[9])
-df_vcreditagricole=data.frame(Date=df_creditagricole$Date,Valeur=(df_creditagricole$High+df_creditagricole$Low)/2*portefeuille_nb_actifs[4])
+df_vairliquide=data.frame(row.names =as.Date(df_airliquide$Date),Valeur=(df_airliquide$High+df_airliquide$Low)/2)
+df_vaxa=data.frame(row.names=as.Date(df_axa$Date),Valeur=(df_axa$High+df_axa$Low)/2)
+df_vbnp=data.frame(row.names=as.Date(df_bnp$Date),Valeur=(df_bnp$High+df_bnp$Low)/2)
+df_vcompagniesaintgobin=data.frame(row.names=as.Date(df_compagniesaintgobin$Date),Valeur=(df_compagniesaintgobin$High+df_compagniesaintgobin$Low)/2)
+df_vlmvh=data.frame(row.names=as.Date(df_lmvh$Date),Valeur=(df_lmvh$High+df_lmvh$Low)/2)
+df_vorange=data.frame(row.names=as.Date(df_orange$Date),Valeur=(df_orange$High+df_orange$Low)/2)
+df_vsg=data.frame(row.names=as.Date(df_sg$Date),Valeur=(df_sg$High+df_sg$Low)/2)
+df_vtotal=data.frame(row.names=as.Date(df_total$Date),Valeur=(df_total$High+df_total$Low)/2)
+df_vvinci=data.frame(row.names=as.Date(df_vinci$Date),Valeur=(df_vinci$High+df_vinci$Low)/2)
+df_vcreditagricole=data.frame(row.names=as.Date(df_creditagricole$Date),Valeur=(df_creditagricole$High+df_creditagricole$Low)/2)
 
 # historique du Portefeuille en terme de valeur total des actifs...
-portefeuille_historique=data.frame(Date=df_vairliquide$Date,Valeur=df_vairliquide$Valeur+df_vaxa$Valeur+df_vbnp$Valeur+df_vcompagniesaintgobin$Valeur+df_vlmvh$Valeur+df_vorange$Valeur+df_vsg$Valeur+df_vtotal$Valeur+df_vvinci$Valeur)
+portefeuille_historique=data.frame(row.names =as.Date(df_airliquide$Date),
+                                   Valeur=df_vairliquide$Valeur*portefeuille_nb_actifs[10]+
+                                     df_vaxa$Valeur*portefeuille_nb_actifs[1]+
+                                     df_vbnp$Valeur*portefeuille_nb_actifs[2]+
+                                     df_vcompagniesaintgobin$Valeur*portefeuille_nb_actifs[8]+
+                                     df_vlmvh$Valeur*portefeuille_nb_actifs[7]+
+                                     df_vorange$Valeur*portefeuille_nb_actifs[5]+
+                                     df_vsg$Valeur*portefeuille_nb_actifs[3]+
+                                     df_vtotal$Valeur*portefeuille_nb_actifs[6]+
+                                     df_vvinci$Valeur*portefeuille_nb_actifs[9]+
+                                     df_vcreditagricole$Valeur*portefeuille_nb_actifs[4])
 
 #Poids 
-vecteur_poids=data.frame(airliquide=df_vairliquide$Valeur[1]/portefeuille_historique$Valeur[1],axa=df_vaxa$Valeur[1]/portefeuille_historique$Valeur[1],bnp=df_vbnp$Valeur[1]/portefeuille_historique$Valeur[1],csg=df_vcompagniesaintgobin$Valeur[1]/portefeuille_historique$Valeur[1],crediagricole=df_vcreditagricole$Valeur[1]/portefeuille_historique$Valeur[1],lmvh=df_vlmvh$Valeur[1]/portefeuille_historique$Valeur[1],orange=df_vorange$Valeur[1]/portefeuille_historique$Valeur[1],sg=df_vsg$Valeur[1]/portefeuille_historique$Valeur[1],total=df_vtotal$Valeur[1]/portefeuille_historique$Valeur[1],vinci=df_vvinci$Valeur[1]/portefeuille_historique$Valeur[1])
+vecteur_poids=data.frame(airliquide=df_vairliquide$Valeur[1]*portefeuille_nb_actifs[10]/portefeuille_historique$Valeur[1],
+                         axa=df_vaxa$Valeur[1]*portefeuille_nb_actifs[1]/portefeuille_historique$Valeur[1],
+                         bnp=df_vbnp$Valeur[1]*portefeuille_nb_actifs[2]/portefeuille_historique$Valeur[1],
+                         csg=df_vcompagniesaintgobin$Valeur[1]*portefeuille_nb_actifs[8]/portefeuille_historique$Valeur[1],
+                         crediagricole=df_vcreditagricole$Valeur[1]*portefeuille_nb_actifs[4]/portefeuille_historique$Valeur[1],
+                         lmvh=df_vlmvh$Valeur[1]*portefeuille_nb_actifs[7]/portefeuille_historique$Valeur[1],
+                         orange=df_vorange$Valeur[1]*portefeuille_nb_actifs[5]/portefeuille_historique$Valeur[1],
+                         sg=df_vsg$Valeur[1]*portefeuille_nb_actifs[3]/portefeuille_historique$Valeur[1],
+                         total=df_vtotal$Valeur[1]*portefeuille_nb_actifs[6]/portefeuille_historique$Valeur[1],
+                         vinci= df_vvinci$Valeur[1]*portefeuille_nb_actifs[9]/portefeuille_historique$Valeur[1])
+
+vecteur_poids = c(vecteur_poids$airliquide[1],
+                  vecteur_poids$axa[1],
+                  vecteur_poids$bnp[1],
+                  vecteur_poids$csg[1],
+                  vecteur_poids$crediagricole[1],
+                  vecteur_poids$lmvh[1],
+                  vecteur_poids$orange[1],
+                  vecteur_poids$sg[1],
+                  vecteur_poids$total[1],
+                  vecteur_poids$vinci[1])
+
+
+# Rendement des actifs
+r_airliquide = na.omit(Return.calculate(df_vairliquide))
+r_axa = na.omit(Return.calculate(df_vaxa))
+r_bnp = na.omit(Return.calculate(df_vbnp))
+r_csg = na.omit(Return.calculate(df_vcompagniesaintgobin))
+r_crediagricole = na.omit(Return.calculate(df_vcreditagricole))
+r_lmvh = na.omit(Return.calculate(df_vlmvh))
+r_orange = na.omit(Return.calculate(df_vorange))
+r_sg = na.omit(Return.calculate(df_vsg))
+r_total = na.omit(Return.calculate(df_vsg))
+r_vinci =na.omit(Return.calculate(df_vvinci))
+
+# Matrice des rendements
+matrice_rendement = data.frame(row.names = as.Date(row.names(r_airliquide)),airliquide=r_airliquide$Valeur,
+                               axa=r_axa$Valeur, bnp=r_bnp$Valeur, csg=r_csg$Valeur, crediagricole = r_crediagricole$Valeur
+                               ,lmvh=r_lmvh$Valeur,orange=r_orange$Valeur,sg=r_sg$Valeur,total=r_total,
+                               vinci=r_vinci$Valeur)
+
+# Rendement historique du portefeuille
+rendement_histo_port = Return.portfolio(matrice_rendement,vecteur_poids)
+
+# Rendement moyen du portefeuille
+rendement_moy_port = (mean(r_airliquide$Valeur)*vecteur_poids[1]+mean(x = r_axa$Valeur)*vecteur_poids[2]+
+  mean(r_bnp$Valeur)*vecteur_poids[3]+
+  mean(r_csg$Valeur)*vecteur_poids[4]+
+  mean(r_crediagricole$Valeur)*vecteur_poids[5]+
+  mean(r_lmvh$Valeur)*vecteur_poids[6]+
+  mean(r_orange$Valeur)*vecteur_poids[7]+
+  mean(r_sg$Valeur)*vecteur_poids[8]+
+  mean(r_total$Valeur)*vecteur_poids[9]+
+  mean(r_vinci$Valeur)*vecteur_poids[10])
+
+# Rendement historique du portefeuille
+
+
+
 
 # Analyse du portefeuille / rentabilité du portefeuille.
+
+
 
 
 # La fonction black and scholes
 # Paramètres
 # le taux sans risque r=0.7%
 
-#Moyennes de de l'évolution des différents actifs
+#Moyennes de de l'Ã©volution des diffÃ©rents actifs
 moy_air_liquide=mean(df_vairliquide$Valeur/portefeuille_nb_actifs[1])
 moy_axa=mean(df_vaxa$Valeur/portefeuille_nb_actifs[2])
 moy_bnp=mean(df_vbnp$Valeur/portefeuille_nb_actifs[3])
@@ -79,6 +151,7 @@ var_creditagricole=var(df_vcreditagricole$Valeur/portefeuille_nb_actifs[10])
 #
 # historique et prix...
 #
+
 
 
 # On exporte un petit csv
