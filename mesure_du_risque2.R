@@ -143,6 +143,12 @@ shapiro.test((as.data.frame(rendement_histo_port))$portfolio.returns)
 jarque.bera.test((as.data.frame(rendement_histo_port))$portfolio.returns)
 
 
+################################## VAR ##########################
+# Var historique du porteffeuille 
+VaR(rendement_histo_port,p=0.99,method = "historical")
+VaR(rendement_histo_port,p=0.99,method = "gaussian")
+
+
 # La fonction black and scholes
 # Paramètres
 # le taux sans risque r=0.7%
@@ -178,17 +184,29 @@ var_creditagricole=var(df_vcreditagricole$Valeur/portefeuille_nb_actifs[10])
 
 nsimu=10
 ar=0
-for(ar in seq(1,nsimu,1)){
-temps=seq(0,1,length=256)
-pas=1/255
+mat=matrix(0,255,nsimu)
 
-Bacc = rnorm(255,sd=sqrt(pas))
+for(ar in seq(1,nsimu,1)){
+temps=seq(0,1,length=255)
+pas=1/254
+
+Bacc = rnorm(254,sd=sqrt(pas))
 
 # Trajectoire
 Bsim = c(0,cumsum(Bacc))
-
+mat[,ar]=Bsim
+  
 plot(temps,Bsim, type="l")
 }
+
+
+########### St de black and scholes #######################"
+# S0 = 10; 
+
+10000*exp((mean(portefeuille_historique$Valeur)-(sd(portefeuille_historique$Valeur)^2/2))*seq(0,1,length=255))*exp(sd(portefeuille_historique$Valeur)*mat[,1])
+
+
+
 
 ##############################################
 # Plot, les différentes figures avec ggplot
