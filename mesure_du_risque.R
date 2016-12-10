@@ -176,6 +176,19 @@ var_creditagricole=var(df_vcreditagricole$Valeur/portefeuille_nb_actifs[10])
 # MOUVEMENT BROWNIEN 
 #############################################
 
+nsimu=10
+ar=0
+for(ar in seq(1,nsimu,1)){
+temps=seq(0,1,length=256)
+pas=1/255
+
+Bacc = rnorm(255,sd=sqrt(pas))
+
+# Trajectoire
+Bsim = c(0,cumsum(Bacc))
+
+plot(temps,Bsim, type="l")
+}
 
 ##############################################
 # Plot, les différentes figures avec ggplot
