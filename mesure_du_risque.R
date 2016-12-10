@@ -4,6 +4,7 @@ library('PerformanceAnalytics')
 library('zoo')
 library('xts')
 library('tseries')
+library('corrplot')
 
 # Chargement des données
 df_airliquide=read.csv('airliquide_jour_2010_2015.csv')
@@ -99,6 +100,9 @@ matrice_rendement = data.frame(row.names = as.Date(row.names(r_airliquide)),airl
 # Rendement historique du portefeuille
 rendement_histo_port = Return.portfolio(matrice_rendement,vecteur_poids)
 
+
+
+# Analyse du portefeuille / rentabilité du portefeuille.
 # Rendement moyen du portefeuille
 rendement_moy_port = (mean(r_airliquide$Valeur)*vecteur_poids[1]+mean(x = r_axa$Valeur)*vecteur_poids[2]+
   mean(r_bnp$Valeur)*vecteur_poids[3]+
@@ -110,21 +114,41 @@ rendement_moy_port = (mean(r_airliquide$Valeur)*vecteur_poids[1]+mean(x = r_axa$
   mean(r_total$Valeur)*vecteur_poids[9]+
   mean(r_vinci$Valeur)*vecteur_poids[10])
 
-# Rendement historique du portefeuille
+maxdd=maxDrawdown(rendement_histo_port)
+
+SharpeRatio.annualized(rendement_histo_port,Rf=0.007, scale = 255)
+
+cor(matrice_rendement)
+
+cov(matrice_rendement)
+
+corrplot(cor(matrice_rendement), type="upper", order="hclust", tl.col="black", tl.srt=45, title = "Matrice des correlations")
+
+### ECARTYPE du portefeuille, 
+
+sigma_portefeuille = vecteur_poids%*%cov(matrice_rendement)%*%vecteur_poids
+
+ratio_sharpe = mean(rendement_moy_port*255-0.007)/(sigma_portefeuille)
 
 
+######## Test de normalité ################"
 
+qqplot(quantile(rnorm(1561,mean((as.data.frame(rendement_histo_port))$portfolio.returns),sd=sd((as.data.frame(rendement_histo_port))$portfolio.returns)), probs = seq(0, 0.99975, 1/2000)),
+       quantile((as.data.frame(rendement_histo_port))$portfolio.returns, probs = seq(0, 0.99975, 1/2000)),xlab = "quantile théorique", ylab = "quantile empirique")
 
-# Analyse du portefeuille / rentabilité du portefeuille.
+abline(a=0,b=1,col='red')
 
+shapiro.test((as.data.frame(rendement_histo_port))$portfolio.returns)
 
+jarque.bera.test((as.data.frame(rendement_histo_port))$portfolio.returns)
 
 
 # La fonction black and scholes
 # Paramètres
 # le taux sans risque r=0.7%
 
-#Moyennes de de l'Ã©volution des diffÃ©rents actifs
+# Moyennes de de l'évolution des différents actifs
+
 moy_air_liquide=mean(df_vairliquide$Valeur/portefeuille_nb_actifs[1])
 moy_axa=mean(df_vaxa$Valeur/portefeuille_nb_actifs[2])
 moy_bnp=mean(df_vbnp$Valeur/portefeuille_nb_actifs[3])
@@ -148,14 +172,9 @@ var_total=var(df_vtotal$Valeur/portefeuille_nb_actifs[8])
 var_vinci=var(df_vvinci$Valeur/portefeuille_nb_actifs[9])
 var_creditagricole=var(df_vcreditagricole$Valeur/portefeuille_nb_actifs[10])
 
-#
-# historique et prix...
-#
-
-
-
-# On exporte un petit csv
-# write.csv(histo_portefeuille,'histo_portefeuille.csv')
+##############################################
+# MOUVEMENT BROWNIEN 
+#############################################
 
 
 ##############################################
