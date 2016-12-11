@@ -303,6 +303,33 @@ Rendement_simu2 = na.omit(Return.calculate(matrice_prix_predict_df2))
 
 var99_predict2 = colQuantiles(Rendement_simu2, probs=(1-0.99))
 
+
+###########" Calcul des tvar par colonnes de rendement simulées ##########################
+j=0
+mat_var=matrix(0,260,nsimu)
+for(j in seq(1,nsimu,1)){
+  
+  mat_var[,j] = Rendement_simu2[,j]<var99_predict2[j]
+  
+}
+mat_var=mat_var*Rendement_simu2
+
+t_var_mat_var = data.frame(v=apply(mat_var,2,mean))
+
+min_tvar_stressed = min(t_var_mat_var)
+
+# Plot de l'évolution des TVAR
+
+ggplot(t_var_mat_var) +
+  geom_line(aes(seq(1,100,1), v))+
+  labs(title="Evolution des TVaR simulées", x="rang", y="TVaR simulation")
+
+#Moyenne des Tvar simulées
+
+moy_tvar_simu = mean(t_var_mat_var$v)
+
+# Var minimal de la simulation de VaR
+
 varminim2 = min(var99_predict2)
 
 ############ Grphique des rendement projetés
@@ -322,14 +349,15 @@ ggplot(ev_volatilite_proj2) +
   labs(title="Evolution des volatilités simulées après stress", x="rang", y="Volatilité par simulation")
 
 # Volatilité projetée maximale
+
 vola_proj_max2 = max(ev_volatilite_proj2$v)
-
-
 
 #########################################################################################################
 
 ############################################## DONNEES A PRESENTER ######################################
 
 les_var_presenter = data.frame(t_var_historique = t_varhistoriq,var_historique = varhistoriq, var_min=varminim,var_min_stressed=varminim2)
-
+#les_var_presenter
+#t_var_mat_var
+#min_tvar_stressed
 #
