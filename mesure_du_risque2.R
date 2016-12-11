@@ -153,36 +153,11 @@ VaR(rendement_histo_port,p=0.99,method = "gaussian")
 # Paramètres
 # le taux sans risque r=0.7%
 
-# Moyennes de de l'évolution des différents actifs
-
-moy_air_liquide=mean(df_vairliquide$Valeur/portefeuille_nb_actifs[1])
-moy_axa=mean(df_vaxa$Valeur/portefeuille_nb_actifs[2])
-moy_bnp=mean(df_vbnp$Valeur/portefeuille_nb_actifs[3])
-moy_compagniesaintgobin=mean(df_vcompagniesaintgobin$Valeur/portefeuille_nb_actifs[4])
-moy_lmvh=mean(df_vlmvh$Valeur/portefeuille_nb_actifs[5])
-moy_orange=mean(df_vorange$Valeur/portefeuille_nb_actifs[6])
-moy_sg=mean(df_vsg$Valeur/portefeuille_nb_actifs[7])
-moy_total=mean(df_vtotal$Valeur/portefeuille_nb_actifs[8])
-moy_vinci=mean(df_vvinci$Valeur/portefeuille_nb_actifs[9])
-moy_creditagricole=mean(df_vcreditagricole$Valeur/portefeuille_nb_actifs[10])
-
-# Variances quadratiques
-var_air_liquide=var(df_vairliquide$Valeur/portefeuille_nb_actifs[1])
-var_axa=var(df_vaxa$Valeur/portefeuille_nb_actifs[2])
-var_bnp=var(df_vbnp$Valeur/portefeuille_nb_actifs[3])
-var_compagniesaintgobin=var(df_vcompagniesaintgobin$Valeur/portefeuille_nb_actifs[4])
-var_lmvh=var(df_vlmvh$Valeur/portefeuille_nb_actifs[5])
-var_orange=var(df_vorange$Valeur/portefeuille_nb_actifs[6])
-var_sg=var(df_vsg$Valeur/portefeuille_nb_actifs[7])
-var_total=var(df_vtotal$Valeur/portefeuille_nb_actifs[8])
-var_vinci=var(df_vvinci$Valeur/portefeuille_nb_actifs[9])
-var_creditagricole=var(df_vcreditagricole$Valeur/portefeuille_nb_actifs[10])
-
 ##############################################
 # MOUVEMENT BROWNIEN 
 #############################################
 
-nsimu=10
+nsimu=100
 ar=0
 mat_simu_brownien=matrix(0,261,nsimu)
 
@@ -214,12 +189,25 @@ for (i in seq(1,nsimu,1)){
 
 matrice_rendement_predict_df = data.frame(row.names = as.Date(date2016$Date),mat_predict)
 
-# calcul des rendements projetés à partir de la matrice des prix  
+############### calcul des rendements projetés à partir de la matrice des prix  
 
 Rendement_simu = na.omit(Return.calculate(matrice_rendement_predict_df))
 
+############ Grphique des rendement projetés
 
+ggplot(Rendement_simu) +
+  geom_line(aes(seq(1,260,1), X100))+
+  labs(title="Evolution des rendements simulées", x="rang", y="Rendement par simulation")
 
+############ Graphique des volatilites projetés au lieu de supersossé les 100 colonnes de rendement simuléées ####
+
+ev_volatilite_proj=data.frame(v=(apply(as.matrix(Rendement_simu),2,sd)))
+ggplot(ev_volatilite_proj) +
+  geom_line(aes(seq(1,nsimu,1), v)) +
+  labs(title="Evolution des volatilités simulées", x="rang", y="Volatilité par simulation")
+
+# Volatilité projetée maximale
+vola_proj_max = max(ev_volatilite_proj$v)
 
 ##############################################
 # Plot, les différentes figures avec ggplot
