@@ -154,8 +154,12 @@ jarque.bera.test((as.data.frame(rendement_histo_port))$portfolio.returns)
 
 ################################## VAR ##########################
 # Var historique du porteffeuille 
-VaR(rendement_histo_port,p=0.99,method = "historical")
-VaR(rendement_histo_port,p=0.99,method = "gaussian")
+varhistoriq = VaR(rendement_histo_port,p=0.99,method = "historical")
+vargauss = VaR(rendement_histo_port,p=0.99,method = "gaussian")
+
+### Calcul de la TVAR ####################""""
+t_varhistoriq=mean(rendement_histo_port$portfolio.returns[rendement_histo_port$portfolio.returns<rep(varhistoriq,1561)])
+
 
 
 # La fonction black and scholes
@@ -186,7 +190,7 @@ plot(temps,Bsim, type="l")
 # Transformation de la matrice de mouvement brownien en data frame pour ggplot
 mat_simu_brownien_df = data.frame(mat_simu_brownien)
 
-########### St de black and scholes #######################"
+########### Projection du prix du portefeuille par ,St de black and scholes #######################"
 # S0 = 10; 
 i = 0
 mat_predict=matrix(0,261,nsimu)
@@ -221,4 +225,57 @@ ggplot(ev_volatilite_proj) +
 # Volatilité projetée maximale
 vola_proj_max = max(ev_volatilite_proj$v)
 
-#############################################  stressed ######################
+
+##############################################################################
+
+###################################### stressed ##############################
+
+##############################################################################
+
+########### St de black and scholes #######################"
+# S0 = 10; 
+i = 0
+mat_predict2=matrix(0,261,nsimu)
+for (i in seq(1,nsimu,1)){
+  mat_predict2[,i]=portefeuille_historique$Valeur[1562]*exp(sd((as.data.frame(rendement_histo_port)*2)$portfolio.returns)*mat_simu_brownien[,i]+mean((as.data.frame(rendement_histo_port))$portfolio.returns)*0.2*(1/255))
+}  
+
+# Transormation de la matrice de prediction qui contien les prix projet pour chaque mouvement brownien simulé 
+
+matrice_prix_predict_df2 = data.frame(row.names = as.Date(date2016$Date),mat_predict2)
+
+
+############### calcul des rendements projetés à partir de la matrice des prix  
+
+Rendement_simu2 = na.omit(Return.calculate(matrice_prix_predict_df2))
+var99_predict2 = colQuantiles(Rendement_simu2, probs=(1-0.99))
+varminim2 = min(var99_predict2)
+
+############ Grphique des rendement projetés
+
+ggplot(Rendement_simu2) +
+  geom_line(aes(seq(1,260,1), X100))+
+  labs(title="Evolution des rendements simulées", x="rang", y="Rendement par simulation")
+
+dygraph(as.xts(Rendement_simu2), main = "Evolution du rendement du PF après Stress", 
+        ylab = "Rendement du PF")
+
+############ Graphique des volatilites projetés au lieu de supersossé les 100 colonnes de rendement simuléées ####
+
+ev_volatilite_proj2=data.frame(v=(apply(as.matrix(Rendement_simu2),2,sd)))
+ggplot(ev_volatilite_proj2) +
+  geom_line(aes(seq(1,nsimu,1), v)) +
+  labs(title="Evolution des volatilités simulées après stress", x="rang", y="Volatilité par simulation")
+
+# Volatilité projetée maximale
+vola_proj_max2 = max(ev_volatilite_proj2$v)
+
+
+
+#########################################################################################################
+
+############################################## DONNEES A PRESENTER ######################################
+
+les_var_presenter = data.frame(t_var_historique = t_varhistoriq,var_historique = varhistoriq, var_min=varminim,var_min_stressed=varminim2)
+
+#
