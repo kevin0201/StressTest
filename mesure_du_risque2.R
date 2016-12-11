@@ -17,7 +17,7 @@ df_sg=read.csv('societegenerale_jour_2010_2015.csv')
 df_total=read.csv('total_jour_2010_2015.csv')
 df_vinci=read.csv('vinci_jour_2010_2015.csv')
 df_creditagricole=read.csv('creditagricole_jour_2010_2015.csv')
-
+date2016 = read.csv('date2016.csv')
 
 # Nombre total d'actifs
 nb_actifs= 100
@@ -184,26 +184,39 @@ var_creditagricole=var(df_vcreditagricole$Valeur/portefeuille_nb_actifs[10])
 
 nsimu=10
 ar=0
-mat=matrix(0,255,nsimu)
+mat_simu_brownien=matrix(0,261,nsimu)
 
 for(ar in seq(1,nsimu,1)){
-temps=seq(0,1,length=255)
-pas=1/254
+temps=seq(0,1,length=261)
+pas=1/260
 
-Bacc = rnorm(254,sd=sqrt(pas))
+Bacc = rnorm(260,sd=sqrt(pas))
 
 # Trajectoire
 Bsim = c(0,cumsum(Bacc))
-mat[,ar]=Bsim
+mat_simu_brownien[,ar]=Bsim
   
 plot(temps,Bsim, type="l")
 }
 
+# Transformation de la matrice de mouvement brownien en data frame pour ggplot
+mat_simu_brownien_df = data.frame(mat_simu_brownien)
 
 ########### St de black and scholes #######################"
 # S0 = 10; 
+i = 0
+mat_predict=matrix(0,261,nsimu)
+for (i in seq(1,nsimu,1)){
+  mat_predict[,i]=portefeuille_historique$Valeur[1562]*exp(sd((as.data.frame(rendement_histo_port))$portfolio.returns)*mat_simu_brownien[,i]+mean((as.data.frame(rendement_histo_port))$portfolio.returns)*(1/255))
+}  
 
-10000*exp((mean(portefeuille_historique$Valeur)-(sd(portefeuille_historique$Valeur)^2/2))*seq(0,1,length=255))*exp(sd(portefeuille_historique$Valeur)*mat[,1])
+# Transormation de la matrice de prediction qui contien les prix projet pour chaque mouvement brownien simulé 
+
+matrice_rendement_predict_df = data.frame(row.names = as.Date(date2016$Date),mat_predict)
+
+# calcul des rendements projetés à partir de la matrice des prix  
+
+Rendement_simu = na.omit(Return.calculate(matrice_rendement_predict_df))
 
 
 
