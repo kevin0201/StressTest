@@ -5,6 +5,8 @@ library('zoo')
 library('xts')
 library('tseries')
 library('corrplot')
+library('matrixStats')
+library('dygraphs')
 
 # Chargement des données
 df_airliquide=read.csv('airliquide_jour_2010_2015.csv')
@@ -55,6 +57,12 @@ portefeuille_historique=data.frame(row.names =as.Date(df_airliquide$Date),
                                      df_vvinci$Valeur*portefeuille_nb_actifs[9]+
                                      df_vcreditagricole$Valeur*portefeuille_nb_actifs[4])
 
+# Graphique historique du portefeuille ....
+
+dygraph(as.xts(portefeuille_historique), main = "Evolution du rendement du PF", 
+        ylab = "Rendement du PF")
+
+
 #Poids 
 vecteur_poids=data.frame(airliquide=df_vairliquide$Valeur[1]*portefeuille_nb_actifs[10]/portefeuille_historique$Valeur[1],
                          axa=df_vaxa$Valeur[1]*portefeuille_nb_actifs[1]/portefeuille_historique$Valeur[1],
@@ -98,9 +106,10 @@ matrice_rendement = data.frame(row.names = as.Date(row.names(r_airliquide)),airl
                                vinci=r_vinci$Valeur)
 
 # Rendement historique du portefeuille
-rendement_histo_port = Return.portfolio(matrice_rendement,vecteur_poids)
+rendement_histo_port = as.data.frame(Return.portfolio(matrice_rendement,vecteur_poids))
 
-
+dygraph(as.xts(rendement_histo_port), main = "Evolution du rendement du PF", 
+        ylab = "Rendement du PF")
 
 # Analyse du portefeuille / rentabilité du portefeuille.
 # Rendement moyen du portefeuille
@@ -187,11 +196,14 @@ for (i in seq(1,nsimu,1)){
 
 # Transormation de la matrice de prediction qui contien les prix projet pour chaque mouvement brownien simulé 
 
-matrice_rendement_predict_df = data.frame(row.names = as.Date(date2016$Date),mat_predict)
+matrice_prix_predict_df = data.frame(row.names = as.Date(date2016$Date),mat_predict)
+
 
 ############### calcul des rendements projetés à partir de la matrice des prix  
 
-Rendement_simu = na.omit(Return.calculate(matrice_rendement_predict_df))
+Rendement_simu = na.omit(Return.calculate(matrice_prix_predict_df))
+var99_predict = colQuantiles(Rendement_simu, probs=(1-0.99))
+varminim = min(var99_predict)
 
 ############ Grphique des rendement projetés
 
@@ -209,11 +221,4 @@ ggplot(ev_volatilite_proj) +
 # Volatilité projetée maximale
 vola_proj_max = max(ev_volatilite_proj$v)
 
-##############################################
-# Plot, les différentes figures avec ggplot
-##############################################
-
-#df=data.frame(x=seq(1,1562,1),y=df_airliquide$Valeur)
-#ggplot(df, aes(x, y))+ 
-#   geom_line()
-
+#############################################  stressed ######################
