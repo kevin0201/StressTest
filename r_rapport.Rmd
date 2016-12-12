@@ -463,9 +463,9 @@ min_tvar_stressed = min(t_var_mat_var)
 
 # Plot de l'évolution des cte
 
-ggplot(t_var_mat_var) +
-  geom_line(aes(seq(1,100,1), v))+
-  labs(title="Evolution des CTE simulées", x="simulation n", y="CTE simulation")
+# ggplot(t_var_mat_var) +
+#   geom_line(aes(seq(1,100,1), v))+
+#   labs(title="Evolution des CTE simulées", x="simulation n", y="CTE simulation")
 
 #Moyenne des Tvar simulées
 
@@ -487,9 +487,9 @@ cat("VaR moyenne à 99%, de toute les simulations: ", var99_predict_moy)
 
 cat("VaR historique à 99% : ", varhistoriq)
 
-cat("CTE minimale de toutes simulations: ",min_tvar_stressed)
-
-cat("CTE moyenne de toutes simulations: ",moy_tvar_simu)
+# cat("CTE minimale de toutes simulations: ",min_tvar_stressed)
+# 
+# cat("CTE moyenne de toutes simulations: ",moy_tvar_simu)
 
 ```
 
