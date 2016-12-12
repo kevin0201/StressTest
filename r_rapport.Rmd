@@ -9,9 +9,23 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+## Données
+
+Nous avons utlisé un portefeuille de 10 actifs pour un total de 100 actions avec les pondérations suivantes:
+
+1. Air Liquide : 9,97% 
+2. Total : 18,40%
+3. Axa: 12,05%
+4. Bnp Paribas : 22,63% 
+5. Société Générale : 1,85% 
+6. Vinci : 9,79%
+7. Compagnie Saint Gobin : 1,92% 
+8. LMVH : 2,87%
+9. Orange : 3,48%
+10. Crédit Agricole : 17,03%
 
 
-```{r cars1, cache=FALSE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
+```{r cars1, cache=FALSE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center", message=FALSE}
 #Chargement des librairies
 library('ggplot2')
 library('PerformanceAnalytics')
@@ -260,6 +274,23 @@ t_varhistoriq=mean(rendement_histo_port$portfolio.returns[rendement_histo_port$p
 cat("CTE à partir de la VaR historique à 99%: ", t_varhistoriq)
 ```
 
+## Simulation : Projection du portefeuille sur un an.
+
+Qu'est ce que l'avenir réserve à ce portefeuille ?
+
+- Projection du portefeuille du 01/01/2016 au 31/12/2016
+
+- Modèle de projection utilisé : Black and Scholes. (wikipedia)
+
+\begin{center}
+S_{t}=S_{0}exp{\sigma W_{t}+\mu t}
+\en{center}
+
+- Nous supposons que le portefeuille ne paie pas de dividende.
+
+- Estimation des paramètres par les moments d'ordre 1 et 2.
+
+
 ## Simulation : Mouvement Brownien standard
 
 ```{r cars14, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
@@ -486,17 +517,15 @@ cat("Volatilité moyenne observée , de toute les simulations (avant crise): ", me
 
 ## Conclusion
 
+1. Nous avons projeté le portefeuille sur un an puis en avons calculé la VaR.
 
-```{r cars20, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
+2. Nous avons imaginé puis impacté les paramètres de projection du portefeuille et avons calculé à nouveau la VaR dite stressée.
 
-#########################################################################################################
+3. On en déduit la VaR en situation sans crise et la VaR si toutefois une crise se produit.
 
-############################################## DONNEES A PRESENTER ######################################
+4. Nous observons ensuite les indicateurs de risque utiles au risque de marché avant et après crise : VaR et Volatilité.
 
-les_var_presenter = data.frame(t_var_historique = t_varhistoriq,var_historique = varhistoriq, var_min=varminim,var_min_stressed=varminim2)
-#les_var_presenter
-#t_var_mat_var
-#min_tvar_stressed
+5. Nous avons posé un ensemble d'hypothèse à des buts de simplification.
 
-print.data.frame(les_var_presenter)
-```
+6. l'estimation des paramètres et les modèles de VaR peuvent être très complexes.
+
