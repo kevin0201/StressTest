@@ -3,6 +3,8 @@ title: "Exemple de simulation de crise"
 output:
   slidy_presentation: default
   ioslides_presentation: default
+  fontsize: 5pt
+  geometry: margin=1in
 ---
 
 ```{r setup, include=FALSE}
@@ -282,10 +284,14 @@ Qu'est ce que l'avenir réserve à ce portefeuille ?
 
 - Modèle de projection utilisé : Black and Scholes. (wikipedia)
 
-\begin{center}
-S_{t}=S_{0}exp{\sigma W_{t}+\mu t}
-\en{center}
 
+$$S_{t}=S_{0}exp{(\sigma W_{t}+\mu t)}$$
+$$S_{t}:\: prix\: du\: portefeuille\: à\: t$$ 
+$$S_{0} : prix\: au\: 31/12/2015$$
+$$\sigma : volatilité$$ 
+$$W_{t} : Mouvement\: brownien\: standard$$
+$$\mu : rendement$$
+$$t : temps\: t=0 \leq t \leq T=1$$
 - Nous supposons que le portefeuille ne paie pas de dividende.
 
 - Estimation des paramètres par les moments d'ordre 1 et 2.
