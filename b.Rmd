@@ -225,11 +225,6 @@ ggplot(data = melted_cov, aes(x=Var1, y=Var2, fill=value)) +
 
 ```
 
-## Ecart-type des rendements du portefeuille
-
-```{r cars9, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
-
-```
 
 ## Test de normalité des rendements
 
@@ -330,11 +325,14 @@ matrice_prix_predict_df = data.frame(row.names = as.Date(date2016$Date),mat_pred
 
 Rendement_simu = na.omit(Return.calculate(matrice_prix_predict_df))
 
-var99_predict = colQuantiles(Rendement_simu, probs=(1-0.99))
+var99_predict = data.frame(v=colQuantiles(Rendement_simu, probs=(1-0.99)))
+
+ggplot(var99_predict) +
+  geom_line(aes(seq(1,nsimu,1), v)) +
+  labs(title="Evolution des VaR à 99% simulées", x="simulation n", y="VaR à 99% par simulation")
+
 
 varminim = min(var99_predict)
-
-cat("VaR 99%, de toute les simulations: ", round(var99_predict,digits = 2))
 
 cat("VaR minimale à 99%, de toute les simulations: ", varminim)
 
@@ -390,14 +388,19 @@ matrice_prix_predict_df2 = data.frame(row.names = as.Date(date2016$Date),mat_pre
 
 Rendement_simu2 = na.omit(Return.calculate(matrice_prix_predict_df2))
 
-var99_predict2 = colQuantiles(Rendement_simu2, probs=(1-0.99))
+var99_predict2 = data.frame(v=colQuantiles(Rendement_simu2, probs=(1-0.99)))
+
+ggplot(var99_predict2) +
+  geom_line(aes(seq(1,nsimu,1), v)) +
+  labs(title="Evolution des VaR à 99% simulées et stressées", x="simulation n", y="VaR à 99% par simulation puis stress")
+
 
 ###########" Calcul des cte par colonnes de rendement simulées ##########################
 j=0
 mat_var=matrix(0,260,nsimu)
 for(j in seq(1,nsimu,1)){
   
-  mat_var[,j] = Rendement_simu2[,j]<var99_predict2[j]
+  mat_var[,j] = Rendement_simu2[,j]<var99_predict2$v[j]
   
 }
 mat_var=mat_var*Rendement_simu2
@@ -419,8 +422,9 @@ moy_tvar_simu = mean(t_var_mat_var$v)
 # Var minimal de la simulation de VaR
 
 varminim2 = min(var99_predict2)
-
-cat("VaR de toutes simulations: ",round(var99_predict2,digits = 2))
+var99_predict2=as.matrix(round(var99_predict2$v,digits = 2))
+cat("VaR minimale de toutes simulations: ", min(var99_predict2))
+cat("VaR moyenne de toutes simulations: ", mean(var99_predict2))
 
 cat("CTE minimale de toutes simulations: ",min_tvar_stressed)
 
