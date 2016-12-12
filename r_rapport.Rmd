@@ -219,6 +219,8 @@ ratio_sharpe = mean(rendement_moy_port*255-0.007)/(sigma_portefeuille*sqrt(255))
 
 ## Matrice des corrélations
 
+- Il existe une forte dépendance entre les rendements des actifs du portefeuille.
+
 ```{r cars7, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 
 
@@ -229,6 +231,7 @@ mat_covar = cov(matrice_rendement)
 
 # Plot matrice des correlation et des rendements avec ggplot et melt de reshape2
 mat_correl[lower.tri(mat_correl)]=NA
+mat_covar[lower.tri(mat_covar)]=NA
 melted_cor = melt(mat_correl)
 melted_cov = melt(mat_covar)
 ggplot(data = melted_cor, aes(x=Var1, y=Var2, fill=value)) + 
@@ -238,7 +241,6 @@ ggplot(data = melted_cor, aes(x=Var1, y=Var2, fill=value)) +
 ```
 
 ## Matrice des covariances
-
 ```{r cars8, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 ggplot(data = melted_cov, aes(x=Var1, y=Var2, fill=value)) + 
   geom_tile() + scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
@@ -246,7 +248,6 @@ ggplot(data = melted_cov, aes(x=Var1, y=Var2, fill=value)) +
     size = 13, hjust = 1))
 
 ```
-
 
 ## Test de normalité des rendements
 
