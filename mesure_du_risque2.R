@@ -7,6 +7,7 @@ library('tseries')
 library('corrplot')
 library('matrixStats')
 library('dygraphs')
+library('reshape2')
 
 # Chargement des données
 
@@ -81,8 +82,8 @@ portefeuille_historique=data.frame(row.names =as.Date(df_airliquide$Date),
 
 # Graphique historique du portefeuille ....
 
-dygraph(as.xts(portefeuille_historique), main = "Evolution du rendement du PF", 
-        ylab = "Rendement du PF")
+dygraph(as.xts(portefeuille_historique), main = "Evolution historique du cours du PF", 
+        ylab = "Cours du PF")
 
 
 #Poids 
@@ -141,7 +142,7 @@ matrice_rendement = data.frame(row.names = as.Date(row.names(r_airliquide)),airl
 
 rendement_histo_port = as.data.frame(Return.portfolio(matrice_rendement,vecteur_poids))
 
-dygraph(as.xts(rendement_histo_port), main = "Evolution du rendement du PF", 
+dygraph(as.xts(rendement_histo_port), main = "Evolution historique du rendement du PF", 
         ylab = "Rendement du PF")
 
 # Analyse du portefeuille / rentabilité du portefeuille.
@@ -161,11 +162,21 @@ maxdd=maxDrawdown(rendement_histo_port)
 
 SharpeRatio.annualized(rendement_histo_port,Rf=0.007, scale = 255)
 
-cor(matrice_rendement)
+mat_correl = cor(matrice_rendement)
 
-cov(matrice_rendement)
+mat_covar = cov(matrice_rendement)
 
-corrplot(cor(matrice_rendement), type="upper", order="hclust", tl.col="black", tl.srt=45, title = "Matrice des correlations")
+# Plot matrice des correlation et des rendements avec ggplot et melt de reshape2
+
+melted_cor = melt(mat_correl)
+melted_cov = melt(mat_covar)
+ggplot(data = melted_cor, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + labs(title="Matrice des correlations", x="variable 1", y="variable 2")
+
+ggplot(data = melted_cov, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + labs(title="Matrice des covariances", x="variable 1", y="variable 2")
+
+#corrplot(cor(matrice_rendement), type="upper", order="hclust", tl.col="black", tl.srt=45, title = "Matrice des correlations")
 
 ### ECARTYPE du portefeuille, 
 
@@ -177,7 +188,7 @@ ratio_sharpe = mean(rendement_moy_port*255-0.007)/(sigma_portefeuille)
 ######## Test de normalité ################"
 
 qqplot(quantile(rnorm(1561,mean((as.data.frame(rendement_histo_port))$portfolio.returns),sd=sd((as.data.frame(rendement_histo_port))$portfolio.returns)), probs = seq(0, 0.99975, 1/2000)),
-       quantile((as.data.frame(rendement_histo_port))$portfolio.returns, probs = seq(0, 0.99975, 1/2000)),xlab = "quantile théorique", ylab = "quantile empirique")
+       quantile((as.data.frame(rendement_histo_port))$portfolio.returns, probs = seq(0, 0.99975, 1/2000)),xlab = "quantile théorique", ylab = "quantile empirique", main="Q-rendements et Q-loi normale")
 
 abline(a=0,b=1,col='red')
 
@@ -224,9 +235,16 @@ Bsim = c(0,cumsum(Bacc))
 
 mat_simu_brownien[,ar]=Bsim
   
-plot(temps,Bsim, type="l")
+# plot(temps,Bsim, type="l")
 
 }
+
+test_data_long = mat_simu_brownien[1:115,1:3]
+test_data_long <- melt(test_data_long)  # convert to long format
+
+ggplot(data=test_data_long,
+       aes(x=Var1, y=value, color=Var2)) + 
+  geom_line()+labs(title="Mouvements browniens standard", x="Simulation au temp t", y="Valeur du MB")
 
 # Transformation de la matrice de mouvement brownien en data frame pour ggplot
 
@@ -261,15 +279,17 @@ varminim = min(var99_predict)
 
 ggplot(Rendement_simu) +
   geom_line(aes(seq(1,260,1), X100))+
-  labs(title="Evolution des rendements simulées", x="rang", y="Rendement par simulation")
+  labs(title="Evolution des rendements simulées", x="temp t", y="Rendement par simulation")
 
+dygraph(as.xts(Rendement_simu), main = "Evolution du rendement du PF avant Stress", ylab = "Rendement du PF")%>%
+  dyLegend(show = "follow")
 ############ Graphique des volatilites projetés au lieu de supersossé les 100 colonnes de rendement simuléées ####
 
 ev_volatilite_proj=data.frame(v=(apply(as.matrix(Rendement_simu),2,sd)))
 
 ggplot(ev_volatilite_proj) +
   geom_line(aes(seq(1,nsimu,1), v)) +
-  labs(title="Evolution des volatilités simulées", x="rang", y="Volatilité par simulation")
+  labs(title="Evolution des volatilités simulées", x="simulation n", y="Volatilité par simulation")
 
 # Volatilité projetée maximale
 
@@ -322,7 +342,7 @@ min_tvar_stressed = min(t_var_mat_var)
 
 ggplot(t_var_mat_var) +
   geom_line(aes(seq(1,100,1), v))+
-  labs(title="Evolution des TVaR simulées", x="rang", y="TVaR simulation")
+  labs(title="Evolution des CTE simulées", x="simulation n", y="TVaR simulation")
 
 #Moyenne des Tvar simulées
 
@@ -338,7 +358,8 @@ ggplot(Rendement_simu2) +
   geom_line(aes(seq(1,260,1), X100))+
   labs(title="Evolution des rendements simulées", x="rang", y="Rendement par simulation")
 
-dygraph(as.xts(Rendement_simu2), main = "Evolution du rendement du PF après Stress", ylab = "Rendement du PF")
+dygraph(as.xts(Rendement_simu2), main = "Evolution du rendement du PF après Stress", ylab = "Rendement du PF")%>%
+  dyLegend(show = "follow")
 
 ############ Graphique des volatilites projetés au lieu de supersossé les 100 colonnes de rendement simuléées ####
 
@@ -346,7 +367,7 @@ ev_volatilite_proj2=data.frame(v=(apply(as.matrix(Rendement_simu2),2,sd)))
 
 ggplot(ev_volatilite_proj2) +
   geom_line(aes(seq(1,nsimu,1), v)) +
-  labs(title="Evolution des volatilités simulées après stress", x="rang", y="Volatilité par simulation")
+  labs(title="Evolution des volatilités simulées après stress", x="simulation n", y="Volatilité par simulation")
 
 # Volatilité projetée maximale
 
