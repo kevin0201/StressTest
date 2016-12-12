@@ -192,6 +192,10 @@ cat("Le MaxDrowDown: ", maxdd)
 
 
 cat("Le Ratio de sharpe annualisé: ", SharpeRatio.annualized(as.xts(rendement_histo_port),Rf=0.007, scale = 255))
+sigma_portefeuille = vecteur_poids%*%cov(matrice_rendement)%*%vecteur_poids
+cat("Volatilité du portefeuille", sigma_portefeuille)
+ratio_sharpe = mean(rendement_moy_port*255-0.007)/(sigma_portefeuille*sqrt(255))
+cat("Ratio de sharpe", ratio_sharpe)
 
 ```
 
@@ -224,13 +228,10 @@ ggplot(data = melted_cov, aes(x=Var1, y=Var2, fill=value)) +
 ## Ecart-type des rendements du portefeuille
 
 ```{r cars9, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
-sigma_portefeuille = vecteur_poids%*%cov(matrice_rendement)%*%vecteur_poids
-cat("sigma_portefeuille", sigma_portefeuille)
-ratio_sharpe = mean(rendement_moy_port*255-0.007)/(sigma_portefeuille*sqrt(255))
-cat("sigma_portefeuille", ratio_sharpe)
+
 ```
 
-## Test de normalité des rendement avec qqplot
+## Test de normalité des rendements
 
 ```{r cars10, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 qqplot(quantile(rnorm(1561,mean((as.data.frame(rendement_histo_port))$portfolio.returns),sd=sd((as.data.frame(rendement_histo_port))$portfolio.returns)), probs = seq(0, 0.99975, 1/2000)),
@@ -245,19 +246,17 @@ shapiro.test((as.data.frame(rendement_histo_port))$portfolio.returns)
 jarque.bera.test((as.data.frame(rendement_histo_port))$portfolio.returns)
 ```
 
-## VaR à 99% historique et VaR théorique
+## VaR à 99% et CTE
 
 ```{r cars12, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 varhistoriq = VaR(rendement_histo_port,p=0.99,method = "historical")
 
-cat("VaR à 99% historique: ", varhistoriq)
+cat("VaR historique à 99% : ", varhistoriq)
 
 vargauss = VaR(rendement_histo_port,p=0.99,method = "gaussian")
 
-cat("VaR à 99% par la loi normale: ", vargauss)
+cat("VaR théorique à 99% de la loi normale: ", vargauss)
 ```
-
-## CTE à partir de la VaR historique
 
 ```{r cars13, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 t_varhistoriq=mean(rendement_histo_port$portfolio.returns[rendement_histo_port$portfolio.returns<rep(varhistoriq,1561)])
@@ -334,6 +333,9 @@ Rendement_simu = na.omit(Return.calculate(matrice_prix_predict_df))
 var99_predict = colQuantiles(Rendement_simu, probs=(1-0.99))
 
 varminim = min(var99_predict)
+
+cat("VaR 99%, de toute les simulations: ", round(var99_predict,digits = 2))
+
 cat("VaR minimale à 99%, de toute les simulations: ", varminim)
 
 ############ Grphique des rendement projetés
@@ -353,29 +355,133 @@ ggplot(ev_volatilite_proj) +
   labs(title="Evolution des volatilités simulées", x="simulation n", y="Volatilité par simulation")
 
 vola_proj_max = max(ev_volatilite_proj$v)
-cat("Volatilité maximale observées , de toute les simulations: ", vola_proj_max)
+cat("Volatilité maximale observée , de toute les simulations: ", vola_proj_max)
+
+cat("Volatilité moyenne observée , de toute les simulations: ", mean(vola_proj_max))
 
 ```
 
-## Slide with Plot15
+## Simulation de crise
+
+Pour la simulation de crise nous partons du scénario imaginatif suivant : 
+
+- Baisse du rendement moyen de 80%
+- Augmentation de la volatilité de 100%
+
+Nous ne tenons pas compte de la probabilité de survenance de crise.
+
+## Simulation de crise : CTE
+
+```{r cars17, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
+i = 0
+mat_predict2=matrix(0,261,nsimu)
+
+for (i in seq(1,nsimu,1)){
+  
+  mat_predict2[,i]=portefeuille_historique$Valeur[1562]*exp(sd((as.data.frame(rendement_histo_port)*2)$portfolio.returns)*mat_simu_brownien[,i]+mean((as.data.frame(rendement_histo_port))$portfolio.returns)*0.2*(1/255))
+
+  }  
+
+# Transormation de la matrice de prediction qui contien les prix projet pour chaque mouvement brownien simulé 
+
+matrice_prix_predict_df2 = data.frame(row.names = as.Date(date2016$Date),mat_predict2)
+
+############### calcul des rendements projetés à partir de la matrice des prix  
+
+Rendement_simu2 = na.omit(Return.calculate(matrice_prix_predict_df2))
+
+var99_predict2 = colQuantiles(Rendement_simu2, probs=(1-0.99))
+
+###########" Calcul des cte par colonnes de rendement simulées ##########################
+j=0
+mat_var=matrix(0,260,nsimu)
+for(j in seq(1,nsimu,1)){
+  
+  mat_var[,j] = Rendement_simu2[,j]<var99_predict2[j]
+  
+}
+mat_var=mat_var*Rendement_simu2
+
+t_var_mat_var = data.frame(v=apply(mat_var,2,mean))
+
+min_tvar_stressed = min(t_var_mat_var)
+
+# Plot de l'évolution des cte
+
+ggplot(t_var_mat_var) +
+  geom_line(aes(seq(1,100,1), v))+
+  labs(title="Evolution des CTE simulées", x="simulation n", y="TVaR simulation")
+
+#Moyenne des Tvar simulées
+
+moy_tvar_simu = mean(t_var_mat_var$v)
+
+# Var minimal de la simulation de VaR
+
+varminim2 = min(var99_predict2)
+
+cat("VaR de toutes simulations: ",round(var99_predict2,digits = 2))
+
+cat("CTE minimale de toutes simulations: ",min_tvar_stressed)
 
 
 
+cat("CTE moyenne de toutes simulations: ",moy_tvar_simu)
+
+```
+
+## Rendements stressed
+
+```{r cars18, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
+############ Grphique des rendement projetés
+
+# ggplot(Rendement_simu2) +
+#   geom_line(aes(seq(1,260,1), X100))+
+#   labs(title="Evolution des rendements simulées", x="rang", y="Rendement par simulation")
+
+# dygraph(as.xts(Rendement_simu2), main = "Evolution du rendement du PF après Stress", ylab = "Rendement du PF")%>%
+#   dyLegend(show = "follow")
+```
+
+## Volatilités stressed
+
+```{r cars19, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
+
+############ Graphique des volatilites projetés au lieu de supersossé les 100 colonnes de rendement simuléées ####
+
+ev_volatilite_proj2=data.frame(v=(apply(as.matrix(Rendement_simu2),2,sd)))
+
+ggplot(ev_volatilite_proj2) +
+  geom_line(aes(seq(1,nsimu,1), v)) +
+  labs(title="Evolution des volatilités simulées après stress", x="simulation n", y="Volatilité par simulation")
+
+# Volatilité projetée maximale
+
+vola_proj_max2 = max(ev_volatilite_proj2$v)
 
 
+cat("Volatilité maximale observée après simulation de crise: ",vola_proj_max2)
+
+cat("Volatilité moyenne observée après simulation de crise: ",mean(vola_proj_max2))
+
+```
+
+## Données d'interprétation
 
 
+```{r cars20, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 
+#########################################################################################################
 
+############################################## DONNEES A PRESENTER ######################################
 
+les_var_presenter = data.frame(t_var_historique = t_varhistoriq,var_historique = varhistoriq, var_min=varminim,var_min_stressed=varminim2)
+#les_var_presenter
+#t_var_mat_var
+#min_tvar_stressed
 
-
-
-
-
-
-
-
+print.data.frame(les_var_presenter)
+```
 
 
 
