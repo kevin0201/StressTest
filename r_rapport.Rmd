@@ -251,6 +251,8 @@ ggplot(data = melted_cov, aes(x=Var1, y=Var2, fill=value)) +
 
 ## Test de normalité des rendements
 
+- Les rendements historiques journaliers ne suivent pas une loi normale.
+- Pour but de simplification nous supposons le contraire.
 ```{r cars10, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 qqplot(quantile(rnorm(1561,mean((as.data.frame(rendement_histo_port))$portfolio.returns),sd=sd((as.data.frame(rendement_histo_port))$portfolio.returns)), probs = seq(0, 0.99975, 1/2000)),
        quantile((as.data.frame(rendement_histo_port))$portfolio.returns, probs = seq(0, 0.99975, 1/2000)),xlab = "quantile théorique", ylab = "quantile empirique", main="Q-rendements et Q-loi normale")
@@ -417,7 +419,7 @@ cat("Volatilité moyenne observée , de toute les simulations (avant crise): ", me
 
 ```
 
-## Simulation de crise
+## Simulation de crise : Scénario extrême
 
 Pour la simulation de crise nous partons du scénario imaginatif suivant : 
 
@@ -426,7 +428,7 @@ Pour la simulation de crise nous partons du scénario imaginatif suivant :
 
 Nous ne tenons pas compte de la probabilité de survenance de crise.
 
-## Simulation de crise : CTE
+## Simulation de crise : VaR stressée
 
 ```{r cars17, cache=TRUE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center"}
 i = 0
