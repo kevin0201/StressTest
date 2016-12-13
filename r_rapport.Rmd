@@ -27,6 +27,7 @@ Nous avons utlisé un portefeuille de 10 actifs pour un total de 100 actions avec
 9. Orange : 3,48%
 10. Crédit Agricole : 17,03%
 
+Données : Cours moyen journalier de l'action entre 01/01/2010 et 31/12/2015. (yahoo finance)
 
 ```{r cars1, cache=FALSE, eval=TRUE, dpi=100, echo=FALSE, cache.comments=FALSE, warning=FALSE, fig.align="center", message=FALSE}
 #Chargement des librairies
